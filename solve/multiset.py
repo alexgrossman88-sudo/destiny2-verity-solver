@@ -3,6 +3,16 @@ from collections.abc import Iterable, Iterator, Set
 from typing import Any, Self
 
 
+def discard_from_counter[T](counter: Counter[T], item: T, /) -> None:
+    """
+    Removes the given element once from the given counter.
+    """
+    match counter[item]:
+        case 0: pass
+        case 1: dict.__delitem__(counter, item)
+        case count: counter[item] = count - 1
+
+
 @Set.register
 class BaseMultiset[T]:
     """
@@ -67,21 +77,18 @@ class BaseMultiset[T]:
 
     def discard_copy(self, item: T, /) -> Self:
         """
-        Copies this set and discards the given element from the copy.
+        Copies this set and removes the given element from the copy.
         Returns the copy.
         """
         new = self.copy()
-        match new._counter[item]:
-            case 0: pass
-            case 1: dict.__delitem__(new._counter, item)
-            case count: new._counter[item] = count - 1
-
+        discard_from_counter(new._counter, item)
         return new
 
     def remove_copy(self, item: T, /) -> Self:
         """
         Copies this set and removes the given element from the copy.
         Returns the copy.
+
         Raises :class:`KeyError` if the element is not present in this set.
         """
         if item in self:
@@ -189,10 +196,7 @@ class BaseMultiset[T]:
             # From this multiset subtract other set, keeping only positive values
             new = self.copy()
             for e in other:
-                match new._counter[e]:
-                    case 0: pass
-                    case 1: dict.__delitem__(new._counter, e)
-                    case count: new._counter[e] = count - 1
+                discard_from_counter(new._counter, e)
 
             return new
 
