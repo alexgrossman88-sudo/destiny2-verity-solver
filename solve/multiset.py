@@ -257,23 +257,21 @@ class BaseMultiset[T]:
         # Intersection - minimum number of counts from both multisets.
         if isinstance(other, BaseMultiset):
             new = self.__class__()
-            counter = new._counter
+            new_counter = new._counter
             for e in self._counter.keys() | other._counter.keys():
-                counts = self._counter[e], other._counter[e]
-                count = max(counts) - min(counts)
+                count = abs(self._counter[e] - other._counter[e])
                 if count > 0:
-                    counter[e] = count
+                    new_counter[e] = count
 
             return new
 
         if isinstance(other, Set):
             new = self.__class__()
-            counter = new._counter
+            new_counter = new._counter
             for e in self._counter.keys() | other:
-                counts = self._counter[e], e in other
-                count = max(counts) - min(counts)
+                count = abs(self._counter[e] - (e in other))
                 if count > 0:
-                    counter[e] = count
+                    new_counter[e] = count
 
             return new
 
