@@ -1,7 +1,14 @@
 from collections import defaultdict, deque
+from itertools import batched
 
 from .players import AliasMappingType
-from .states import StateOfAllRooms, StateOfAllStatues
+from .states import (
+    DissectMove,
+    KNIGHTS_PER_SPAWN,
+    SHAPE_TO_KNIGHT_POSITION,
+    StateOfAllRooms,
+    StateOfAllStatues,
+    )
 
 
 def print_pass_moves(
@@ -66,8 +73,41 @@ def print_dissect_moves(state: StateOfAllStatues, /, interactive: bool) -> None:
 
     print_move = input if interactive else print
     print('--- STEPS FOR DISSECTION ---')
-    for m in state.moves_made:
-        print_move(f'Dissect {m.shape} from {m.destination}')
+
+    unused_shapes = []
+    move_batches = batched(state.moves_made, KNIGHTS_PER_SPAWN)
+    moves: list[DissectMove] = list(next(move_batches))
+    while moves:
+        shapes_to_collect = set(SHAPE_TO_KNIGHT_POSITION)
+        pending_moves = moves.copy()
+        moves = []
+
+        for m in pending_moves:
+            if m.shape in unused_shapes:
+                unused_shapes.remove(m.shape)
+                print_move(f'Dissect {m.destination} with previously collected {m.shape}')
+            elif m.shape in shapes_to_collect:
+                shapes_to_collect.remove(m.shape)
+                print_move(
+                    f'Kill {SHAPE_TO_KNIGHT_POSITION[m.shape]} knight, '
+                    f'collect {m.shape} '
+                    f'and dissect {m.destination}'
+                    )
+            else:
+                moves.append(m)
+                for shape in shapes_to_collect:
+                    unused_shapes.append(shape)
+                    print_move(
+                        f'Kill {SHAPE_TO_KNIGHT_POSITION[shape]} knight '
+                        f'and collect {shape} with shape-free ad clear player'
+                        )
+
+        next_moves = next(move_batches, None)
+        if next_moves:
+            moves.extend(next_moves)
+
+        if moves:
+            print_move('Kill champions')
 
     print(
         '--- DISSECTION IS DONE ---\n'
