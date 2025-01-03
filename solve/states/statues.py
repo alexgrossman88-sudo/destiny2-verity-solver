@@ -9,7 +9,7 @@ from ..key_sets import KeySetType
 from ..multiset import Multiset
 from ..shapes import *
 
-ShapeToKnightPosition: Mapping[Shape2D, PositionsType] = {
+SHAPE_TO_KNIGHT_POSITION: Mapping[Shape2D, PositionsType] = {
     circle:   LEFT,
     triangle: MIDDLE,
     square:   RIGHT,
@@ -18,7 +18,7 @@ ShapeToKnightPosition: Mapping[Shape2D, PositionsType] = {
 A correspondence between 2D shape and the spawn position of the Hive Knight which drops it.
 """
 
-KNIGHTS_PER_SPAWN = len(ShapeToKnightPosition)
+KNIGHTS_PER_SPAWN = len(SHAPE_TO_KNIGHT_POSITION)
 """
 Number of Hive Knights spawned at once.
 """
@@ -177,7 +177,7 @@ def init_statues(
 
 
 __all__ = (
-    'ShapeToKnightPosition',
+    'SHAPE_TO_KNIGHT_POSITION',
     'KNIGHTS_PER_SPAWN',
     'DissectMove',
     'StateOfAllStatues',

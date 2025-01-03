@@ -37,7 +37,7 @@ number_of_moves_mixed = {
     '4[44]-3[33]-0[00]': 6,
     }
 """
-Combination code to the number of moves required to solve rooms using ``KSMixed``.
+Combination code to the number of moves required to solve rooms using ``KS_MIXED``.
 """
 
 number_of_moves_double1 = {
@@ -79,7 +79,7 @@ number_of_moves_double1 = {
     '4[44]-3[33]-0[00]': 9,
     }
 """
-Combination code to the number of moves required to solve rooms using ``KSDouble1``.
+Combination code to the number of moves required to solve rooms using ``KS_DOUBLE_1``.
 """
 
 number_of_moves_double2 = {
@@ -121,5 +121,5 @@ number_of_moves_double2 = {
     '4[44]-3[33]-0[00]': 9,
     }
 """
-Combination code to the number of moves required to solve rooms using ``KSDouble2``.
+Combination code to the number of moves required to solve rooms using ``KS_DOUBLE_2``.
 """

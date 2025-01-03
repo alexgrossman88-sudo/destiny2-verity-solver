@@ -18,8 +18,8 @@ class TestMoveCount(TestCase):
             move_count_double1: dict[str, int],
             move_count_double2: dict[str, int],
             ) -> None:
-        key_sets = KSMixed, KSDouble1, KSDouble2
-        key_set_names = 'KSMixed', 'KSDouble1', 'KSDouble2'
+        key_sets = KS_MIXED, KS_DOUBLE_1, KS_DOUBLE_2
+        key_set_names = 'KS_MIXED', 'KS_DOUBLE_1', 'KS_DOUBLE_2'
         move_numbers = move_count_mixed, move_count_double1, move_count_double2
         solve_args = (False, None), (True, LEFT), (True, MIDDLE), (True, RIGHT)
         for ks, ks_name, mapping in zip(key_sets, key_set_names, move_numbers):

@@ -5,7 +5,7 @@ from itertools import permutations
 from typing import Self
 
 from .base import *
-from ..key_sets import KSMixed, KeySetType
+from ..key_sets import KS_MIXED, KeySetType
 from ..multiset import Multiset
 from ..shapes import Shape2D, Shape3D
 
@@ -32,14 +32,14 @@ class RoomState(State):
         # To remove a shadow X, the room must receive shape X.
         # For example, circle room must receive triangle and square to remove both shadows.
         if shapes_to_receive is None:
-            # This rooms must receive KSMixed[own_shape].terms in any case.
+            # This rooms must receive KS_MIXED[own_shape].terms in any case.
             # In addition, this room must receive any other shape from final_dropping_shapes
             # unless it is already present in dropping_shapes.
             # Take union (not sum!) between
             # "must receive in any case" and "must receive to be done".
             # Unions of multisets takes the highest count of elements instead of summing count,
             # ex. {triangle, circle} | {triangle, triangle} = {triangle, circle, triangle}.
-            shapes_to_receive = KSMixed[own_shape].terms \
+            shapes_to_receive = KS_MIXED[own_shape].terms \
                                 | (final_dropping_shapes - dropping_shapes)
 
         super().__init__(

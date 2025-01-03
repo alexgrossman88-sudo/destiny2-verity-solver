@@ -41,7 +41,7 @@ def main(
     rooms, statues, aliases = config.encounter_data()
     match config.key_set_name:
         case KeySetName.MIXED:
-            key_set = KSMixed
+            key_set = KS_MIXED
         case KeySetName.DOUBLE:
             key_set = get_best_double_key(
                 rooms=rooms if do_rooms else None,

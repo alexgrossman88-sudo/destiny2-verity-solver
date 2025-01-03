@@ -64,18 +64,18 @@ class Combination:
 
 
 code_to_best_ks = {
-    '0[03]-3[34]-4[40]': KSDouble2,
-    '0[04]-3[30]-4[43]': KSDouble1,
-    '0[03]-4[40]-3[34]': KSDouble2,
-    '0[04]-4[43]-3[30]': KSDouble1,
-    '3[30]-0[04]-4[43]': KSDouble1,
-    '3[34]-0[03]-4[40]': KSDouble2,
-    '3[30]-4[43]-0[04]': KSDouble1,
-    '3[34]-4[40]-0[03]': KSDouble2,
-    '4[40]-0[03]-3[34]': KSDouble2,
-    '4[43]-0[04]-3[30]': KSDouble1,
-    '4[40]-3[34]-0[03]': KSDouble2,
-    '4[43]-3[30]-0[04]': KSDouble1,
+    '0[03]-3[34]-4[40]': KS_DOUBLE_2,
+    '0[04]-3[30]-4[43]': KS_DOUBLE_1,
+    '0[03]-4[40]-3[34]': KS_DOUBLE_2,
+    '0[04]-4[43]-3[30]': KS_DOUBLE_1,
+    '3[30]-0[04]-4[43]': KS_DOUBLE_1,
+    '3[34]-0[03]-4[40]': KS_DOUBLE_2,
+    '3[30]-4[43]-0[04]': KS_DOUBLE_1,
+    '3[34]-4[40]-0[03]': KS_DOUBLE_2,
+    '4[40]-0[03]-3[34]': KS_DOUBLE_2,
+    '4[43]-0[04]-3[30]': KS_DOUBLE_1,
+    '4[40]-3[34]-0[03]': KS_DOUBLE_2,
+    '4[43]-3[30]-0[04]': KS_DOUBLE_1,
     }
 
 
@@ -86,7 +86,7 @@ def get_best_double_key(*, rooms: Combination | None, statues: Combination | Non
     At first evaluates the best key set for room combination.
     If there is no best key or the combination is not provided,
     then it uses statue combination for evaluation.
-    If either evaluation is indifferent, returns ``KSDouble1``.
+    If either evaluation is indifferent, returns ``KS_DOUBLE_1``.
     """
     if rooms is not None:
         best_ks = code_to_best_ks.get(rooms.code)
@@ -98,7 +98,7 @@ def get_best_double_key(*, rooms: Combination | None, statues: Combination | Non
         if best_ks is not None:
             return best_ks
 
-    return KSDouble1
+    return KS_DOUBLE_1
 
 
 __all__ = 'Node', 'Combination', 'get_best_double_key'
