@@ -1,5 +1,5 @@
 from collections import Counter
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 from itertools import chain, permutations, product
 from typing import Self
@@ -8,6 +8,20 @@ from .base import *
 from ..key_sets import KeySetType
 from ..multiset import Multiset
 from ..shapes import *
+
+ShapeToKnightPosition: Mapping[Shape2D, PositionsType] = {
+    circle:   LEFT,
+    triangle: MIDDLE,
+    square:   RIGHT,
+    }
+"""
+A correspondence between 2D shape and the spawn position of the Hive Knight which drops it.
+"""
+
+KNIGHTS_PER_SPAWN = len(ShapeToKnightPosition)
+"""
+Number of Hive Knights spawned at once.
+"""
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
@@ -162,4 +176,10 @@ def init_statues(
         )
 
 
-__all__ = 'DissectMove', 'StateOfAllStatues', 'init_statues'
+__all__ = (
+    'ShapeToKnightPosition',
+    'KNIGHTS_PER_SPAWN',
+    'DissectMove',
+    'StateOfAllStatues',
+    'init_statues',
+    )
