@@ -293,7 +293,7 @@ class Multiset[T](BaseMultiset[T]):
     __slots__ = ()
 
     def __hash__(self, /) -> int:
-        return hash(frozenset(self._counter))
+        return hash(frozenset(self._counter.items()))
 
 
 @MutableSet.register
