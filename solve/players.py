@@ -8,10 +8,17 @@ type AliasMappingType = Mapping[PositionsType, str]
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
-class Player:
+class SoloPlayer:
     alias: str
     their_shape: Shape2D
     other_shape: Shape2D
 
 
-__all__ = 'Player', 'AliasMappingType'
+@dataclass(frozen=True, kw_only=True, slots=True)
+class MainRoomPlayers:
+    dissector: str
+    helper1: str
+    helper2: str
+
+
+__all__ = 'SoloPlayer', 'AliasMappingType', 'MainRoomPlayers'
