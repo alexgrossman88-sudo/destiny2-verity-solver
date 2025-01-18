@@ -138,7 +138,10 @@ class StateOfAllRooms(StateWithAllPositions[RoomState, PassMove]):
             if s1.is_done or s2.is_done: continue
 
             for shape in s1.shapes_available:
-                if s2.is_shape_required(shape):
+                # Use the possibility to pass the shape to s2
+                # only if s2 has at most 2 shapes available.
+                # This avoids any room to have 4 shapes or more available simultaneously.
+                if s2.is_shape_required(shape) and s2.shapes_available.total <= 2:
                     new_s1, new_s2 = s1.pass_shape(shape, s2)
                     move = PassMove(
                         shape=shape,
