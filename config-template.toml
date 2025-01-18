@@ -35,8 +35,8 @@ last_position = ''
 # 40 - cylinder
 # 34 or 43 - prism
 
-inner_shapes = [4, 0, 3]
-# Numeric numbers of three 2D shapes
+shades = [4, 0, 3]
+# Numbers of three 2D shapes
 # which are held by statues in solo rooms from left to right.
 # Must be present.
 
@@ -71,7 +71,7 @@ other_shape = 3
     20,
     23,
 ]
-# Numeric numbers of three 3D shapes
+# Numbers of three 3D shapes
 # which are held by statues in the main room from left to right.
 # Must be present.
 

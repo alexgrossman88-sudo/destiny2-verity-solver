@@ -17,7 +17,7 @@ class KeySetName(Enum):
 @dataclass(frozen=True, kw_only=True, slots=True)
 class Config:
     key_set_name: KeySetName
-    inner_shapes: tuple[Shape2D, Shape2D, Shape2D]
+    shades: tuple[Shape2D, Shape2D, Shape2D]
     solo_players: tuple[SoloPlayer, SoloPlayer, SoloPlayer]
     shapes_3d: tuple[Shape3D, Shape3D, Shape3D]
     main_room_players: MainRoomPlayers
@@ -28,27 +28,27 @@ class Config:
         """
         Extracts room combination, statue combination and alias mapping from this config.
         """
-        inner = self.inner_shapes
-        inner2person = {
+        shades = self.shades
+        shade2person = {
             i: p
-            for i in inner
+            for i in shades
             for p in self.solo_players
             if p.their_shape == i
             }
-        aliases = dict(zip(ALL_POSITIONS, (inner2person[i].alias for i in inner)))
-        other = tuple(inner2person[i].other_shape for i in inner)
+        aliases = dict(zip(ALL_POSITIONS, (shade2person[i].alias for i in shades)))
+        other = tuple(shade2person[i].other_shape for i in shades)
 
         rooms = Combination(
-            left=Node.from_inner_and_other(inner[0], other[0]),
-            middle=Node.from_inner_and_other(inner[1], other[1]),
-            right=Node.from_inner_and_other(inner[2], other[2]),
+            left=Node.from_inner_and_other(shades[0], other[0]),
+            middle=Node.from_inner_and_other(shades[1], other[1]),
+            right=Node.from_inner_and_other(shades[2], other[2]),
             )
 
         shapes_3d = self.shapes_3d
         statues = Combination(
-            left=Node.from_inner_and_other(inner[0], shapes_3d[0] - inner[0]),
-            middle=Node.from_inner_and_other(inner[1], shapes_3d[1] - inner[1]),
-            right=Node.from_inner_and_other(inner[2], shapes_3d[2] - inner[2]),
+            left=Node.from_inner_and_other(shades[0], shapes_3d[0] - shades[0]),
+            middle=Node.from_inner_and_other(shades[1], shapes_3d[1] - shades[1]),
+            right=Node.from_inner_and_other(shades[2], shapes_3d[2] - shades[2]),
             )
 
         return rooms, statues, aliases
@@ -107,11 +107,11 @@ def read_config(filepath: str, /) -> Config:
     assert last_position is None or is_position(last_position), \
         f'last_position must be \'\', {LEFT!r}, {MIDDLE!r} or {RIGHT!r}'
 
-    inner_shapes = data.get('inner_shapes')
-    assert isinstance(inner_shapes, list) and set(inner_shapes) == _number_to_2d_shape.keys(), \
-        f'inner_shapes must be a permutation of [0, 3, 4]'
+    shades = data.get('shades')
+    assert isinstance(shades, list) and set(shades) == _number_to_2d_shape.keys(), \
+        f'shades must be a permutation of [0, 3, 4]'
 
-    inner_shapes_gen = (_number_to_2d_shape[i] for i in inner_shapes)
+    shades_gen = (_number_to_2d_shape[i] for i in shades)
 
     players = []
     for i, p in enumerate(map(data.get, ('player1', 'player2', 'player3')), 1):
@@ -165,7 +165,7 @@ def read_config(filepath: str, /) -> Config:
 
     return Config(
         key_set_name=KeySetName(key_set_name),
-        inner_shapes=(next(inner_shapes_gen), next(inner_shapes_gen), next(inner_shapes_gen)),
+        shades=(next(shades_gen), next(shades_gen), next(shades_gen)),
         solo_players=(players[0], players[1], players[2]),
         shapes_3d=(next(shapes_3d_gen), next(shapes_3d_gen), next(shapes_3d_gen)),
         main_room_players=main_room_players,
