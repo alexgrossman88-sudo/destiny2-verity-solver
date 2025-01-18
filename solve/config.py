@@ -112,6 +112,7 @@ def read_config(filepath: str, /) -> Config:
         f'shades must be a permutation of [0, 3, 4]'
 
     shades_gen = (_number_to_2d_shape[i] for i in shades)
+    shades_final = next(shades_gen), next(shades_gen), next(shades_gen)
 
     players = []
     for i, p in enumerate(map(data.get, ('player1', 'player2', 'player3')), 1):
@@ -147,6 +148,7 @@ def read_config(filepath: str, /) -> Config:
     ), f'3d_shapes must be a list of three numbers representing 3D shapes'
 
     shapes_3d_gen = (_number_to_3d_shape[i] for i in shapes_3d)
+    shapes_3d_final = next(shapes_3d_gen), next(shapes_3d_gen), next(shapes_3d_gen)
 
     dissector = main_room['dissector_alias']
     helper1 = main_room['helper1_alias']
@@ -163,11 +165,16 @@ def read_config(filepath: str, /) -> Config:
         helper2=helper2.strip(),
         )
 
+    assert all(d2 in d3.terms for d2, d3 in zip(shades_final, shapes_3d_final)), (
+        'every 3D shape must contain respective shade at least once, '
+        f'got {shapes_3d_final} and {shades_final}'
+    )
+
     return Config(
         key_set_name=KeySetName(key_set_name),
-        shades=(next(shades_gen), next(shades_gen), next(shades_gen)),
+        shades=shades_final,
         solo_players=(players[0], players[1], players[2]),
-        shapes_3d=(next(shapes_3d_gen), next(shapes_3d_gen), next(shapes_3d_gen)),
+        shapes_3d=shapes_3d_final,
         main_room_players=main_room_players,
         is_doing_triumph=is_doing_triumph,
         last_position=last_position,
