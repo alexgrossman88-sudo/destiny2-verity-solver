@@ -142,11 +142,11 @@ class StateOfAllRooms(StateWithAllPositions[RoomState, PassMove]):
 
 def init_rooms(
         *,
-        left_inner_shape: Shape2D,
+        left_shade: Shape2D,
         left_other_shape: Shape2D,
-        middle_inner_shape: Shape2D,
+        middle_shade: Shape2D,
         middle_other_shape: Shape2D,
-        right_inner_shape: Shape2D,
+        right_shade: Shape2D,
         right_other_shape: Shape2D,
         key_set: KeySetType,
         ) -> StateOfAllRooms:
@@ -154,11 +154,11 @@ def init_rooms(
     A convenience function to specify the initial state of all solo rooms.
     """
     shapes = (
-        left_inner_shape,
+        left_shade,
         left_other_shape,
-        middle_inner_shape,
+        middle_shade,
         middle_other_shape,
-        right_inner_shape,
+        right_shade,
         right_other_shape,
         )
     assert all(isinstance(f, Shape2D) for f in shapes), f'all shapes must be 2D shapes'
@@ -169,21 +169,21 @@ def init_rooms(
     return StateOfAllRooms(
         left=RoomState(
             LEFT,
-            left_inner_shape,
-            dropping_shapes=Multiset((left_inner_shape, left_other_shape)),
-            final_dropping_shapes=key_set[left_inner_shape].terms,
+            left_shade,
+            dropping_shapes=Multiset((left_shade, left_other_shape)),
+            final_dropping_shapes=key_set[left_shade].terms,
             ),
         middle=RoomState(
             MIDDLE,
-            middle_inner_shape,
-            dropping_shapes=Multiset((middle_inner_shape, middle_other_shape)),
-            final_dropping_shapes=key_set[middle_inner_shape].terms,
+            middle_shade,
+            dropping_shapes=Multiset((middle_shade, middle_other_shape)),
+            final_dropping_shapes=key_set[middle_shade].terms,
             ),
         right=RoomState(
             RIGHT,
-            right_inner_shape,
-            dropping_shapes=Multiset((right_inner_shape, right_other_shape)),
-            final_dropping_shapes=key_set[right_inner_shape].terms,
+            right_shade,
+            dropping_shapes=Multiset((right_shade, right_other_shape)),
+            final_dropping_shapes=key_set[right_shade].terms,
             ),
         )
 

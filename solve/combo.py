@@ -8,7 +8,7 @@ from .states import StateOfAllRooms, StateOfAllStatues, init_rooms, init_statues
 
 @dataclass(frozen=True, slots=True)
 class Node:
-    inner: Shape2D
+    shade: Shape2D
     available: tuple[Shape2D, Shape2D]
 
     @property
@@ -16,15 +16,15 @@ class Node:
         """
         Numeric code for this node.
         """
-        return f'{self.inner.code}[{self.available[0].code}{self.available[1].code}]'
+        return f'{self.shade.code}[{self.available[0].code}{self.available[1].code}]'
 
     @classmethod
-    def from_inner_and_other(cls, inner: Shape2D, other: Shape2D, /) -> Self:
+    def from_shade_and_other(cls, shade: Shape2D, other: Shape2D, /) -> Self:
         """
-        Creates a new node using inner shape and other shape.
-        Both inner shape and other shape are added as available.
+        Creates a new node using shade and other shape.
+        Both shade and other shape are added as available.
         """
-        return cls(inner, (inner, other))
+        return cls(shade, (shade, other))
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
@@ -42,23 +42,23 @@ class Combination:
 
     def to_room_state(self, key_set: KeySetType, /) -> StateOfAllRooms:
         return init_rooms(
-            left_inner_shape=self.left.inner,
+            left_shade=self.left.shade,
             left_other_shape=self.left.available[1],
-            middle_inner_shape=self.middle.inner,
+            middle_shade=self.middle.shade,
             middle_other_shape=self.middle.available[1],
-            right_inner_shape=self.right.inner,
+            right_shade=self.right.shade,
             right_other_shape=self.right.available[1],
             key_set=key_set,
             )
 
     def to_statue_state(self, key_set: KeySetType, /) -> StateOfAllStatues:
         return init_statues(
-            left_inner_shape=self.left.inner,
-            left_held_shape=self.left.available[0] + self.left.available[1],
-            middle_inner_shape=self.middle.inner,
-            middle_held_shape=self.middle.available[0] + self.middle.available[1],
-            right_inner_shape=self.right.inner,
-            right_held_shape=self.right.available[0] + self.right.available[1],
+            left_shade=self.left.shade,
+            left_3d_shape=self.left.available[0] + self.left.available[1],
+            middle_shade=self.middle.shade,
+            middle_3d_shape=self.middle.available[0] + self.middle.available[1],
+            right_shade=self.right.shade,
+            right_3d_shape=self.right.available[0] + self.right.available[1],
             key_set=key_set,
             )
 
