@@ -293,7 +293,12 @@ class Multiset[T](BaseMultiset[T]):
     __slots__ = ()
 
     def __hash__(self, /) -> int:
-        return hash(frozenset(self._counter.items()))
+        # Use only keys to evaluate the hash of this set.
+        # It is required because __eq__ method supports regular sets.
+        # A regular set equals a multiset
+        # if keys of multiset's counters are equal to the regular set.
+        # Thus, hash of the multiset must be equal to hash of the regular set too.
+        return hash(frozenset(self._counter))
 
 
 @MutableSet.register
