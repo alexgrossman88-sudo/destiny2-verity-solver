@@ -143,14 +143,16 @@ def init_statues(
     """
     shades = left_shade, middle_shade, right_shade
     assert all(isinstance(s, Shape2D) for s in shades), f'all shades must be 2D'
-    held = left_3d_shape, middle_3d_shape, right_3d_shape
-    assert all(isinstance(s, Shape3D) for s in held), f'all 3D shapes must be 3D'
-    assert all(d2 in d3.terms for d2, d3 in zip(shades, held)), \
-        f'every 3D shape must contain respective shade at least once'
+    shapes_3d = left_3d_shape, middle_3d_shape, right_3d_shape
+    assert all(isinstance(s, Shape3D) for s in shapes_3d), f'all 3D shapes must be 3D'
+    assert all(d2 in d3.terms for d2, d3 in zip(shades, shapes_3d)), (
+        'every 3D shape must contain respective shade at least once, '
+        f'got {shapes_3d} and {shades}'
+    )
 
     c1 = Counter(shades)
     assert all(v == 1 for v in c1.values()), f'the number of all shades must be 1, got {c1}'
-    c2 = Counter(chain.from_iterable(s.terms.elements() for s in held))
+    c2 = Counter(chain.from_iterable(s.terms.elements() for s in shapes_3d))
     assert all(v == 2 for v in c2.values()), \
         f'the number of all 2D terms of held 3D shapes must be 2, got {c2}'
 
