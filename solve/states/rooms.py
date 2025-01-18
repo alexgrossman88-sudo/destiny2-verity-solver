@@ -91,12 +91,32 @@ class RoomState(State):
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class PassMove:
-    departure: PositionsType
     shape: Shape2D
-    destination: PositionsType
-    # States AFTER move is done
+    """
+    Shape passed from the departure room to the destination room.
+    """
     departure_state: RoomState
+    """
+    State of the departure room after this move is done.
+    """
     destination_state: RoomState
+    """
+    State of the destination room after this move is done.
+    """
+
+    @property
+    def departure(self, /) -> PositionsType:
+        """
+        Position of the departure room.
+        """
+        return self.departure_state.position
+
+    @property
+    def destination(self, /) -> PositionsType:
+        """
+        Position of the destination room.
+        """
+        return self.destination_state.position
 
 
 class StateOfAllRooms(StateWithAllPositions[RoomState, PassMove]):
@@ -121,9 +141,7 @@ class StateOfAllRooms(StateWithAllPositions[RoomState, PassMove]):
                 if s2.is_shape_required(shape):
                     new_s1, new_s2 = s1.pass_shape(shape, s2)
                     move = PassMove(
-                        departure=s1.position,
                         shape=shape,
-                        destination=s2.position,
                         departure_state=new_s1,
                         destination_state=new_s2,
                         )
