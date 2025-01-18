@@ -6,25 +6,17 @@ from .shapes import Shape2D
 from .states import StateOfAllRooms, StateOfAllStatues, init_rooms, init_statues
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, kw_only=True, slots=True)
 class Node:
     shade: Shape2D
-    available: tuple[Shape2D, Shape2D]
+    other: Shape2D
 
     @property
     def code(self, /) -> str:
         """
         Numeric code for this node.
         """
-        return f'{self.shade.code}[{self.available[0].code}{self.available[1].code}]'
-
-    @classmethod
-    def from_shade_and_other(cls, shade: Shape2D, other: Shape2D, /) -> Self:
-        """
-        Creates a new node using shade and other shape.
-        Both shade and other shape are added as available.
-        """
-        return cls(shade, (shade, other))
+        return f'{self.shade.code}[{self.shade.code}{self.other.code}]'
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
@@ -43,22 +35,22 @@ class Combination:
     def to_room_state(self, key_set: KeySetType, /) -> StateOfAllRooms:
         return init_rooms(
             left_shade=self.left.shade,
-            left_other_shape=self.left.available[1],
+            left_other_shape=self.left.other,
             middle_shade=self.middle.shade,
-            middle_other_shape=self.middle.available[1],
+            middle_other_shape=self.middle.other,
             right_shade=self.right.shade,
-            right_other_shape=self.right.available[1],
+            right_other_shape=self.right.other,
             key_set=key_set,
             )
 
     def to_statue_state(self, key_set: KeySetType, /) -> StateOfAllStatues:
         return init_statues(
             left_shade=self.left.shade,
-            left_3d_shape=self.left.available[0] + self.left.available[1],
+            left_3d_shape=self.left.shade + self.left.other,
             middle_shade=self.middle.shade,
-            middle_3d_shape=self.middle.available[0] + self.middle.available[1],
+            middle_3d_shape=self.middle.shade + self.middle.other,
             right_shade=self.right.shade,
-            right_3d_shape=self.right.available[0] + self.right.available[1],
+            right_3d_shape=self.right.shade + self.right.other,
             key_set=key_set,
             )
 

@@ -39,16 +39,16 @@ class Config:
         other = tuple(shade2person[i].other_shape for i in shades)
 
         rooms = Combination(
-            left=Node.from_shade_and_other(shades[0], other[0]),
-            middle=Node.from_shade_and_other(shades[1], other[1]),
-            right=Node.from_shade_and_other(shades[2], other[2]),
+            left=Node(shade=shades[0], other=other[0]),
+            middle=Node(shade=shades[1], other=other[1]),
+            right=Node(shade=shades[2], other=other[2]),
             )
 
         shapes_3d = self.shapes_3d
         statues = Combination(
-            left=Node.from_shade_and_other(shades[0], shapes_3d[0] - shades[0]),
-            middle=Node.from_shade_and_other(shades[1], shapes_3d[1] - shades[1]),
-            right=Node.from_shade_and_other(shades[2], shapes_3d[2] - shades[2]),
+            left=Node(shade=shades[0], other=shapes_3d[0] - shades[0]),
+            middle=Node(shade=shades[1], other=shapes_3d[1] - shades[1]),
+            right=Node(shade=shades[2], other=shapes_3d[2] - shades[2]),
             )
 
         return rooms, statues, aliases
