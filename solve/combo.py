@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Self
 
 from .key_sets import *
 from .shapes import Shape2D
