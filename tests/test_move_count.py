@@ -28,14 +28,15 @@ class TestMoveCount(TestCase):
                 state = create_state(combo, ks)
                 for with_triumph, last_position in solve_args:
                     solved = state.solve(with_triumph, last_position)
-                    actual_move_count = len(solved.moves_made)
-                    with self.subTest(
-                            ks=ks_name,
-                            code=code,
-                            with_triumph=with_triumph,
-                            last_position=last_position,
-                            ):
-                        self.assertEqual(expected_move_count, actual_move_count)
+                    for i, solution in enumerate(solved):
+                        with self.subTest(
+                                ks=ks_name,
+                                code=code,
+                                with_triumph=with_triumph,
+                                last_position=last_position,
+                                solution_idx=i,
+                                ):
+                            self.assertEqual(expected_move_count, len(solution.moves_made))
 
     def test_rooms(self, /) -> None:
         self._test_all(
