@@ -1,5 +1,5 @@
 from collections import Counter
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from itertools import chain, permutations, product
 from typing import Self
@@ -124,7 +124,8 @@ class StateOfAllStatues(StateWithAllPositions[StatueState, DissectMove]):
                     yield StateOfAllStatues(**kwargs)
 
     # Required for correct type hinting in stupid PyCharm...
-    def solve(self, /, is_doing_triumph: bool, last_position_touched: str | None) -> Self: ...
+    def solve(self, /, is_doing_triumph: bool, last_position_touched: str | None) -> Sequence[Self]:
+        ...
     del solve
 
 

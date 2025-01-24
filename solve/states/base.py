@@ -1,4 +1,4 @@
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from inspect import signature
 from typing import Literal, Protocol, Self, TypeGuard
 
@@ -168,10 +168,10 @@ class StateWithAllPositions[S: State, M: PMove]:
         """
         raise NotImplementedError
 
-    def solve(self, /, is_doing_triumph: bool, last_position_touched: str | None) -> Self:
+    def solve(self, /, is_doing_triumph: bool, last_position_touched: str | None) -> Sequence[Self]:
         """
         Makes moves starting from this state until one of the next states is done,
-        then returns that done state.
+        then returns all done states.
         """
         # region First cycle
         if is_doing_triumph and last_position_touched:
@@ -191,9 +191,14 @@ class StateWithAllPositions[S: State, M: PMove]:
                 for state in states
                 for next_state in state.next_states(is_doing_triumph)
                 ]
-            for state in states:
-                if state.is_done:
-                    return state
+            done_states = [
+                state
+                for state in states
+                if state.is_done
+                ]
+
+            if done_states:
+                return done_states
         else:
             raise ValueError(
                 f'cannot solve encounter with initial {self} '
