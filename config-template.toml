@@ -41,7 +41,7 @@ shades = [4, 0, 3]
 
 # Players in solo rooms.
 # All three must be present.
-# alias - player's nickname.
+# alias - player's nickname. Cannot be an empty string or a string with only spaces.
 # their_shape - a 2D shape which is held by their statue.
 # other_shape - a 2D shape which can be dropped in their room besides their shape.
 # For example:
@@ -71,6 +71,7 @@ other_shape = 3
 
 # Players in the main room.
 # All three must be present.
+# Aliases cannot be empty strings or strings with only spaces.
 # Dissector is the player who does dissection.
 # Helpers are other player present in the room.
 # Sometimes the script can mention helpers
