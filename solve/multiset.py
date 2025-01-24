@@ -13,6 +13,8 @@ def discard_from_counter[T](counter: Counter[T], item: T, /) -> None:
         case count: counter[item] = count - 1
 
 
+# TODO use dict directly
+#  write convenience functions for addition, comparisons and operations.
 @Set.register
 class BaseMultiset[T]:
     """
