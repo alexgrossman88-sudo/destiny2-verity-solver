@@ -36,8 +36,7 @@ last_position = ''
 # 34 or 43 - prism
 
 shades = [4, 0, 3]
-# Numbers of three 2D shapes
-# which are held by statues in solo rooms from left to right.
+# Numbers of three 2D shapes which are held by statues in solo rooms from left to right.
 # Must be present.
 
 # Players in solo rooms.
@@ -66,13 +65,8 @@ their_shape = 0
 other_shape = 3
 
 [main_room]
-3d_shapes = [
-    24,
-    20,
-    23,
-]
-# Numbers of three 3D shapes
-# which are held by statues in the main room from left to right.
+3d_shapes = [24, 20, 23]
+# Numbers of three 3D shapes which are held by statues in the main room from left to right.
 # Must be present.
 
 # Players in the main room.
