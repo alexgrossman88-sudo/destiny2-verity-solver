@@ -64,7 +64,6 @@ def main(
             print_step(step.render())
 
         last_position = rooms_best.last_position
-
         print(
             '--- SOLO ROOMS ARE DONE ---\n'
             'All players in solo rooms must collect two shapes and wait'
