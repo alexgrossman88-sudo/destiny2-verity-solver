@@ -1,8 +1,10 @@
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from unittest import TestCase
 
 from solve.combo import Combination
 from solve.key_sets import *
+from solve.move_analyzer import *
+from solve.players import AliasMappingType, MainRoomPlayers
 from solve.states import LEFT, MIDDLE, RIGHT, StateWithAllPositions
 from . import move_count_dissection, move_count_rooms
 from .combos import all_combinations
@@ -12,44 +14,72 @@ class TestMoveCount(TestCase):
     def _test_all[S, M](
             self,
             create_state: Callable[[Combination, KeySetType], StateWithAllPositions[S, M]],
+            select_solution: Callable[
+                [Sequence[StateWithAllPositions[S, M]]],
+                tuple[StateWithAllPositions[S, M], Sequence[Step]],
+            ],
             /,
             *,
             move_count_mixed: dict[str, int],
             move_count_double1: dict[str, int],
             move_count_double2: dict[str, int],
+            step_count_mixed: dict[str, int],
+            step_count_double1: dict[str, int],
+            step_count_double2: dict[str, int],
             ) -> None:
-        key_sets = KS_MIXED, KS_DOUBLE_1, KS_DOUBLE_2
-        key_set_names = 'KS_MIXED', 'KS_DOUBLE_1', 'KS_DOUBLE_2'
-        move_numbers = move_count_mixed, move_count_double1, move_count_double2
         solve_args = (False, None), (True, LEFT), (True, MIDDLE), (True, RIGHT)
-        for ks, ks_name, mapping in zip(key_sets, key_set_names, move_numbers):
+        params = zip(
+            (KS_MIXED, KS_DOUBLE_1, KS_DOUBLE_2),
+            ('KS_MIXED', 'KS_DOUBLE_1', 'KS_DOUBLE_2'),
+            (move_count_mixed, move_count_double1, move_count_double2),
+            (step_count_mixed, step_count_double1, step_count_double2),
+            )
+        for ks, ks_name, move_counts, step_counts in params:
             for code, combo in all_combinations.items():
-                expected_move_count = mapping[code]
+                expected_move_count = move_counts[code]
+                expected_step_count = step_counts[code]
                 state = create_state(combo, ks)
                 for with_triumph, last_position in solve_args:
-                    solved = state.solve(with_triumph, last_position)
-                    for i, solution in enumerate(solved):
-                        with self.subTest(
-                                ks=ks_name,
-                                code=code,
-                                with_triumph=with_triumph,
-                                last_position=last_position,
-                                solution_idx=i,
-                                ):
-                            self.assertEqual(expected_move_count, len(solution.moves_made))
+                    with self.subTest(
+                            ks=ks_name,
+                            code=code,
+                            with_triumph=with_triumph,
+                            last_position=last_position,
+                            ):
+                        solutions = state.solve(with_triumph, last_position)
+                        best, steps = select_solution(solutions)
+                        self.assertEqual(expected_move_count, len(best.moves_made))
+                        # Number of dissection steps can be less than expected.
+                        # Usually, the number of steps are
+                        # expected_move_count + expected_move_count // 3
+                        # but one extra move is required
+                        # when doing challenge and triumph with specific last position.
+                        # For example, 0[00]-3[34]-4[43] is solved in 8 steps,
+                        # but it is solved in 9 when middle is the last position.
+                        self.assertGreaterEqual(expected_step_count, len(steps))
 
     def test_rooms(self, /) -> None:
+        aliases: AliasMappingType = {LEFT: 'A', MIDDLE: 'B', RIGHT: 'C'}
         self._test_all(
             Combination.to_room_state,
+            lambda seq: best_solution(seq, aliases, describe_pass_moves),
             move_count_mixed=move_count_rooms.number_of_moves_mixed,
             move_count_double1=move_count_rooms.number_of_moves_double1,
             move_count_double2=move_count_rooms.number_of_moves_double2,
+            step_count_mixed=move_count_rooms.number_of_steps_mixed,
+            step_count_double1=move_count_rooms.number_of_steps_double1,
+            step_count_double2=move_count_rooms.number_of_steps_double2,
             )
 
     def test_dissection(self, /) -> None:
+        aliases = MainRoomPlayers(dissector='D', helper1='E', helper2='F')
         self._test_all(
             Combination.to_statue_state,
+            lambda seq: best_solution(seq, aliases, describe_dissect_moves),
             move_count_mixed=move_count_dissection.number_of_moves_mixed,
             move_count_double1=move_count_dissection.number_of_moves_double1,
             move_count_double2=move_count_dissection.number_of_moves_double2,
+            step_count_mixed=move_count_dissection.number_of_steps_mixed,
+            step_count_double1=move_count_dissection.number_of_steps_double1,
+            step_count_double2=move_count_dissection.number_of_steps_double2,
             )

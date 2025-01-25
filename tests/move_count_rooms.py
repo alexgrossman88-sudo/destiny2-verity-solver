@@ -123,3 +123,27 @@ number_of_moves_double2 = {
 """
 Combination code to the number of moves required to solve rooms using ``KS_DOUBLE_2``.
 """
+
+number_of_steps_mixed = {
+    code: moves_count * 2
+    for code, moves_count in number_of_moves_mixed.items()
+    }
+"""
+Combination code to the number of steps required to solve rooms using ``KS_MIXED``.
+"""
+
+number_of_steps_double1 = {
+    code: moves_count * 2
+    for code, moves_count in number_of_moves_double1.items()
+    }
+"""
+Combination code to the number of steps required to solve rooms using ``KS_DOUBLE_1``.
+"""
+
+number_of_steps_double2 = {
+    code: moves_count * 2
+    for code, moves_count in number_of_moves_double2.items()
+    }
+"""
+Combination code to the number of steps required to solve rooms using ``KS_DOUBLE_2``.
+"""
