@@ -48,11 +48,12 @@ Then, for every phase:
 7. In opened PowerShell window type `python -m solve both` and press Enter.
 8. Follow the steps printed in the console window.
 9. Once all steps are completed:
-    - Kill champions, resque each other.
-    - Position you team according to the guide mentioned previously.
-    - If you are doing the triumph,
-      in config set `last_position` to the last position mentioned in the steps.
-    - If you are doing the challenge, switch key set.
+    1. Kill champions, resque each other.
+    2. Position you team according to the guide mentioned previously.
+    3. If you are doing the triumph,
+       in config set `last_position` to the last position mentioned in the steps.
+    4. If you are doing the challenge, switch key set.
+    5. Return to the step 1.
 
 Run `python -m solve --help` to see more options.
 
