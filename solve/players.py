@@ -10,7 +10,7 @@ class Player:
 
     Keep mutable to allow updates to the alias.
     This is useful for dynamically changing player's alais
-    after all steps are created in cases when someone dies.
+    in cases when someone dies after all steps are created.
     """
     alias: str
 
