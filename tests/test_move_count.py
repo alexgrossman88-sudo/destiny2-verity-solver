@@ -4,13 +4,23 @@ from unittest import TestCase
 from solve.combo import Combination
 from solve.key_sets import *
 from solve.move_analyzer import *
-from solve.players import AliasMappingType, MainRoomPlayers
+from solve.players import AllPlayers, Player
 from solve.states import LEFT, MIDDLE, RIGHT, StateWithAllPositions
 from . import move_count_dissection, move_count_rooms
 from .combos import all_combinations
 
 
 class TestMoveCount(TestCase):
+    def setUp(self, /) -> None:
+        self.all_players = AllPlayers(
+            left=Player('A'),
+            middle=Player('B'),
+            right=Player('C'),
+            dissector=Player('D'),
+            helper1=Player('E'),
+            helper2=Player('F'),
+            )
+
     def _test_all[S, M](
             self,
             create_state: Callable[[Combination, KeySetType], StateWithAllPositions[S, M]],
@@ -59,10 +69,9 @@ class TestMoveCount(TestCase):
                         self.assertGreaterEqual(expected_step_count, len(steps))
 
     def test_rooms(self, /) -> None:
-        aliases: AliasMappingType = {LEFT: 'A', MIDDLE: 'B', RIGHT: 'C'}
         self._test_all(
             Combination.to_room_state,
-            lambda seq: best_solution(seq, aliases, describe_pass_moves),
+            lambda seq: best_solution(seq, self.all_players, describe_pass_moves),
             move_count_mixed=move_count_rooms.number_of_moves_mixed,
             move_count_double1=move_count_rooms.number_of_moves_double1,
             move_count_double2=move_count_rooms.number_of_moves_double2,
@@ -72,10 +81,9 @@ class TestMoveCount(TestCase):
             )
 
     def test_dissection(self, /) -> None:
-        aliases = MainRoomPlayers(dissector='D', helper1='E', helper2='F')
         self._test_all(
             Combination.to_statue_state,
-            lambda seq: best_solution(seq, aliases, describe_dissect_moves),
+            lambda seq: best_solution(seq, self.all_players, describe_dissect_moves),
             move_count_mixed=move_count_dissection.number_of_moves_mixed,
             move_count_double1=move_count_dissection.number_of_moves_double1,
             move_count_double2=move_count_dissection.number_of_moves_double2,

@@ -1,7 +1,7 @@
 import tomllib
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import Any, NamedTuple
 
 from .combo import Combination, Node
 from .players import *
@@ -14,19 +14,27 @@ class KeySetName(Enum):
     DOUBLE = 'double'
 
 
+class SoloPlayer(NamedTuple):
+    player: Player
+    their_shape: Shape2D
+    other_shape: Shape2D
+
+
 @dataclass(frozen=True, kw_only=True, slots=True)
 class Config:
     key_set_name: KeySetName
     shades: tuple[Shape2D, Shape2D, Shape2D]
     solo_players: tuple[SoloPlayer, SoloPlayer, SoloPlayer]
     shapes_3d: tuple[Shape3D, Shape3D, Shape3D]
-    main_room_players: MainRoomPlayers
+    dissector: Player
+    helper1: Player
+    helper2: Player
     is_doing_triumph: bool
     last_position: PositionsType | None
 
-    def encounter_data(self, /) -> tuple[Combination, Combination, AliasMappingType]:
+    def encounter_data(self, /) -> tuple[Combination, Combination, AllPlayers]:
         """
-        Extracts room combination, statue combination and alias mapping from this config.
+        Extracts room combination, statue combination and all player aliases from this config.
         """
         shades = self.shades
         shade2person = {
@@ -35,7 +43,7 @@ class Config:
             for p in self.solo_players
             if p.their_shape == i
             }
-        aliases = dict(zip(ALL_POSITIONS, (shade2person[i].alias for i in shades)))
+        position2player = dict(zip(ALL_POSITIONS, (shade2person[i].player for i in shades)))
         other = tuple(shade2person[i].other_shape for i in shades)
 
         rooms = Combination(
@@ -51,7 +59,13 @@ class Config:
             right=Node(shade=shades[2], other=shapes_3d[2] - shades[2]),
             )
 
-        return rooms, statues, aliases
+        all_players = AllPlayers(
+            **position2player,
+            dissector=self.dissector,
+            helper1=self.helper1,
+            helper2=self.helper2,
+            )
+        return rooms, statues, all_players
 
 
 _number_to_2d_shape = {
@@ -72,7 +86,7 @@ _number_to_3d_shape = {
     43: prism,
     }
 
-_solo_player_fields = {field.name for field in fields(SoloPlayer)}
+_solo_player_fields = {'alias', 'their_shape', 'other_shape'}
 _main_room_fields = {'3d_shapes', 'dissector_alias', 'helper1_alias', 'helper2_alias'}
 
 
@@ -130,7 +144,7 @@ def read_config(filepath: str, /) -> Config:
 
         players.append(
             SoloPlayer(
-                alias=alias.strip(),
+                player=Player(alias.strip()),
                 their_shape=_number_to_2d_shape[their_shape],
                 other_shape=_number_to_2d_shape[other_shape],
                 )
@@ -159,12 +173,6 @@ def read_config(filepath: str, /) -> Config:
             and is_non_empty_string(helper2)
     ), f'aliases of players in the main room must be non-empty strings'
 
-    main_room_players = MainRoomPlayers(
-        dissector=dissector.strip(),
-        helper1=helper1.strip(),
-        helper2=helper2.strip(),
-        )
-
     assert all(d2 in d3.terms for d2, d3 in zip(shades_final, shapes_3d_final)), (
         'every 3D shape must contain respective shade at least once, '
         f'got {shapes_3d_final} and {shades_final}'
@@ -175,7 +183,9 @@ def read_config(filepath: str, /) -> Config:
         shades=shades_final,
         solo_players=(players[0], players[1], players[2]),
         shapes_3d=shapes_3d_final,
-        main_room_players=main_room_players,
+        dissector=Player(dissector.strip()),
+        helper1=Player(helper1.strip()),
+        helper2=Player(helper2.strip()),
         is_doing_triumph=is_doing_triumph,
         last_position=last_position,
         )
