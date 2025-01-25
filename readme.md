@@ -32,8 +32,9 @@ A tool for solving the 4th encounter of raid "Salvation's Edge" in Destiny 2.
    and on the 3rd phase - back to `mixed`.
 7. Position your team according to the guide from step 2.
 8. You are ready to start the encounter.
+9. Do not die.
 
-Then, for every phase:
+Then, once phase started and two selected solo players appear in solo rooms:
 
 1. Player 1 must tell 2D shapes held by statues in solo rooms from left to right.
    Fill `shades` respectively.
@@ -43,13 +44,12 @@ Then, for every phase:
 4. Meanwhile, someone in the main room must tell shapes held by the statues from left to right.
    Fill `3d_shapes`.
 5. Decide who is dissecting in the main room and fill `dissector_alias` with their nickname.
-6. Fill `helper1_alias` and `helper2_alias`
-   with the nicknames of other player in the main room.
+6. Fill `helper1_alias` and `helper2_alias` with the nicknames of other players in the main room.
 7. In opened PowerShell window type `python -m solve both` and press Enter.
 8. Follow the steps printed in the console window.
 9. Once all steps are completed:
     1. Kill champions, resque each other.
-    2. Position you team according to the guide mentioned previously.
+    2. Position your team according to the guide mentioned previously.
     3. If you are doing the triumph,
        in config set `last_position` to the last position mentioned in the steps.
     4. If you are doing the challenge, switch key set.
@@ -59,6 +59,8 @@ Run `python -m solve --help` to see more options.
 
 - For example, instead of `both` you can use `solo-rooms` to get steps only for solo rooms.
 - Option `-i` pauses output after every step. Press Enter to proceed to the next step.
+
+I highly recommend to find 7th person to run this script and orchestrate people in the encounter.
 
 # Development
 
