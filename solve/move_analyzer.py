@@ -104,32 +104,25 @@ def describe_pass_moves(
         departure2collect[m.departure].appendleft(m.shape)
 
     steps = [
-        Step(f'Player {aliases[position]}: collect {shapes.pop()}')
+        Step.collect(aliases[position], shapes.pop())
         for position, shapes in departure2collect.items()
         ]
 
     destination2collect = defaultdict(deque)
     for m in moves_made:
-        steps.append(
-            Step(
-                f'Player {aliases[m.departure]}: '
-                f'pass {m.shape} to {m.destination}'
-                )
-            )
+        steps.append(Step.pass_(aliases[m.departure], m.shape, m.destination))
 
         shapes = departure2collect[m.departure]
         if shapes:
             shape = shapes.pop()
             if shape in m.departure_state:
-                steps.append(Step(f'Player {aliases[m.departure]}: collect {shape}'))
+                steps.append(Step.collect(aliases[m.departure], shape))
             else:
                 destination2collect[m.departure].appendleft(shape)
 
         shapes = destination2collect[m.destination]
-        if shapes and shapes[-1] in m.destination_state.shapes_available:
-            steps.append(
-                Step(f'Player {aliases[m.destination]}: collect {shapes.pop()}')
-                )
+        if shapes and shapes[-1] in m.destination_state:
+            steps.append(Step.collect(aliases[m.destination], shapes.pop()))
 
     return steps
 
