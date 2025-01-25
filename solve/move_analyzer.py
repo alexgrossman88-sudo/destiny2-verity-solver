@@ -130,12 +130,13 @@ def describe_pass_moves(
 @dataclass(slots=True)
 class ShapeHolders:
     aliases: MainRoomPlayers
+    dissector_shape: Shape2D | None = None
     helper1_shape: Shape2D | None = None
     helper2_shape: Shape2D | None = None
 
-    def collect_shape(self, shape: Shape2D, /) -> Step:
+    def collect_shape(self, shape: Shape2D, /) -> str:
         """
-        Orders any available player to collect the given shape.
+        Determines the available player to collect the given shape.
         """
         if self.helper1_shape is None:
             self.helper1_shape = shape
@@ -143,23 +144,25 @@ class ShapeHolders:
         elif self.helper2_shape is None:
             self.helper2_shape = shape
             name = self.aliases.helper2
+        elif self.dissector_shape is None:
+            self.dissector_shape = shape
+            name = self.aliases.dissector
         else:
             raise RuntimeError(
-                'all helpers in the main room already hold a shape, '
+                'all players in the main room already hold a shape, '
                 f'cannot collect {shape}, {self}'
                 )
 
-        return Step(
-            f'Player {name}: '
-            f'kill {SHAPE_TO_KNIGHT_POSITION[shape]} knight '
-            f'and collect {shape}'
-            )
+        return name
 
-    def dissect(self, shape: Shape2D, position: PositionsType, /) -> Step:
+    def dissect(self, shape: Shape2D, /) -> str:
         """
-        Orders any available player to dissect the given statue with the given shape.
+        Determines the available player to dissect with the given shape.
         """
-        if self.helper1_shape == shape:
+        if self.dissector_shape == shape:
+            self.dissector_shape = None
+            name = self.aliases.dissector
+        elif self.helper1_shape == shape:
             self.helper1_shape = None
             name = self.aliases.helper1
         elif self.helper2_shape == shape:
@@ -167,14 +170,14 @@ class ShapeHolders:
             name = self.aliases.helper2
         else:
             raise RuntimeError(
-                'no helper in the main room holds shape, '
-                f'cannot dissect {position} with {shape}, {self}'
+                'no player in the main room holds shape, '
+                f'cannot dissect with {shape}, {self}'
                 )
 
-        return Step(f'Player {name}: dissect {position}')
+        return name
 
     def __contains__(self, item: Shape2D, /) -> bool:
-        return item == self.helper1_shape or item == self.helper2_shape
+        return item in (self.helper1_shape, self.helper2_shape, self.dissector_shape)
 
 
 def describe_dissect_moves(
@@ -197,20 +200,23 @@ def describe_dissect_moves(
 
         for m in pending_moves:
             if m.shape in shape_holders:
-                steps.append(shape_holders.dissect(m.shape, m.destination))
+                name = shape_holders.dissect(m.shape)
+                steps.append(Step.dissect(name, m.shape, m.destination))
             elif m.shape in shapes_to_collect:
                 shapes_to_collect.remove(m.shape)
-                steps.append(
-                    Step(
-                        f'Player {aliases.dissector}: '
-                        f'kill {SHAPE_TO_KNIGHT_POSITION[m.shape]} knight, '
-                        f'collect {m.shape} and dissect {m.destination}'
-                        )
-                    )
+                if shape_holders.dissector_shape is None:
+                    steps.append(Step.dissect(aliases.dissector, m.shape, m.destination, True))
+                else:
+                    name = shape_holders.collect_shape(m.shape)
+                    steps.append(Step.collect(name, m.shape, with_knight=True))
+                    name = shape_holders.dissect(m.shape)
+                    steps.append(Step.dissect(name, m.shape, m.destination))
             else:
                 moves.append(m)
                 while shapes_to_collect:
-                    steps.append(shape_holders.collect_shape(shapes_to_collect.pop()))
+                    shape = shapes_to_collect.pop()
+                    name = shape_holders.collect_shape(shape)
+                    steps.append(Step.collect(name, shape, with_knight=True))
 
         next_moves = next(move_batches, None)
         if next_moves:
@@ -233,7 +239,7 @@ def best_solution[SM, M, A](
     and a function which describes sequences of moves given aliases,
     decides the best solution and returns it with its steps.
 
-    The best solution sis the solution with the minimum number of steps.
+    The best solution is the solution with the minimum number of steps.
     """
     it = iter(states)
     best = next(it)
