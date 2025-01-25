@@ -1,7 +1,8 @@
 from collections import defaultdict, deque
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from itertools import batched
+from typing import Any, Self
 
 from .players import AliasMappingType, MainRoomPlayers
 from .shapes import Shape2D
@@ -20,6 +21,73 @@ class Step:
     A single step in the encounter solution.
     """
     description: str
+    params: Mapping[str, Any]
+
+    def __init__(self, description: str, /, **kwargs: Any) -> None:
+        object.__setattr__(self, 'description', description)
+        object.__setattr__(self, 'params', kwargs)
+
+    def render(self, /) -> str:
+        """
+        Converts this step to a string.
+        """
+        return self.description.format_map(self.params)
+
+    @classmethod
+    def collect(
+            cls,
+            player: str,
+            shape: Shape2D,
+            /,
+            with_knight: bool = False,
+            ) -> Self:
+        if with_knight:
+            return cls(
+                'Player {player}: kill {position} knight and collect {shape}',
+                player=player,
+                shape=shape,
+                position=SHAPE_TO_KNIGHT_POSITION[shape],
+                )
+
+        return cls(
+            'Player {player}: collect {shape}',
+            player=player,
+            shape=shape,
+            )
+
+    @classmethod
+    def pass_(cls, player: str, shape: Shape2D, position: PositionsType, /) -> Self:
+        return cls(
+            'Player {player}: pass {shape} to {position}',
+            player=player,
+            shape=shape,
+            position=position,
+            )
+
+    @classmethod
+    def dissect(
+            cls,
+            player: str,
+            shape: Shape2D,
+            destination: PositionsType,
+            /,
+            to_collect: bool = False,
+            ) -> Self:
+        if to_collect:
+            return cls(
+                'Player {player}: kill {position} knight, '
+                'collect {shape} and dissect {destination}',
+                player=player,
+                shape=shape,
+                position=SHAPE_TO_KNIGHT_POSITION[shape],
+                destination=destination,
+                )
+
+        return cls(
+            'Player {player}: dissect {destination}',
+            player=player,
+            destination=destination,
+            )
 
 
 def describe_pass_moves(

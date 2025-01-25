@@ -60,7 +60,7 @@ def main(
         room_state = rooms.to_room_state(key_set)
         rooms_solutions = room_state.solve(with_triumph, last_position)
         rooms_best, rooms_steps = best_solution(rooms_solutions, aliases, describe_pass_moves)
-        for step in rooms_steps: print_step(step.description)
+        for step in rooms_steps: print_step(step.render())
         last_position = rooms_best.last_position
 
         print(
@@ -77,7 +77,7 @@ def main(
             config.main_room_players,
             describe_dissect_moves,
             )
-        for step in statues_steps: print_step(step.description)
+        for step in statues_steps: print_step(step.render())
         last_position = statues_best.last_position
         print(
             '--- DISSECTION IS DONE ---\n'
