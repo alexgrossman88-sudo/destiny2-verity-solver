@@ -62,10 +62,11 @@ class TestMoveCount(TestCase):
                         # Number of dissection steps can be less than expected.
                         # Usually, the number of steps are
                         # expected_move_count + expected_move_count // 3
-                        # but one extra move is required
-                        # when doing challenge and triumph with specific last position.
-                        # For example, 0[00]-3[34]-4[43] is solved in 8 steps,
-                        # but it is solved in 9 when middle is the last position.
+                        # but one extra step is required
+                        # when doing both challenge and triumph with specific last position.
+                        # For example,0[00]-3[34]-4[43] is solved in 9 steps
+                        # when middle is the last position,
+                        # and is solved in 8 steps otherwise.
                         self.assertGreaterEqual(expected_step_count, len(steps))
 
     def test_rooms(self, /) -> None:
