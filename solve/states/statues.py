@@ -1,5 +1,5 @@
 from collections import Counter
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from itertools import chain, permutations, product
 from typing import Self
@@ -8,6 +8,20 @@ from .base import *
 from ..key_sets import KeySetType
 from ..multiset import Multiset
 from ..shapes import *
+
+SHAPE_TO_KNIGHT_POSITION: Mapping[Shape2D, PositionsType] = {
+    circle:   LEFT,
+    triangle: MIDDLE,
+    square:   RIGHT,
+    }
+"""
+A correspondence between 2D shape and the spawn position of the Hive Knight which drops it.
+"""
+
+KNIGHTS_PER_SPAWN = len(SHAPE_TO_KNIGHT_POSITION)
+"""
+Number of Hive Knights spawned at once.
+"""
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
@@ -110,56 +124,65 @@ class StateOfAllStatues(StateWithAllPositions[StatueState, DissectMove]):
                     yield StateOfAllStatues(**kwargs)
 
     # Required for correct type hinting in stupid PyCharm...
-    def solve(self, /, is_doing_triumph: bool, last_position_touched: str | None) -> Self: ...
+    def solve(self, /, is_doing_triumph: bool, last_position_touched: str | None) -> Sequence[Self]:
+        ...
     del solve
 
 
 def init_statues(
         *,
-        left_inner_shape: Shape2D,
-        left_held_shape: Shape3D,
-        middle_inner_shape: Shape2D,
-        middle_held_shape: Shape3D,
-        right_inner_shape: Shape2D,
-        right_held_shape: Shape3D,
+        left_shade: Shape2D,
+        left_3d_shape: Shape3D,
+        middle_shade: Shape2D,
+        middle_3d_shape: Shape3D,
+        right_shade: Shape2D,
+        right_3d_shape: Shape3D,
         key_set: KeySetType,
         ) -> StateOfAllStatues:
     """
     A convenience function to specify the initial state of all statues in the main room.
     """
-    inner = left_inner_shape, middle_inner_shape, right_inner_shape
-    assert all(isinstance(s, Shape2D) for s in inner), f'all inner shapes must be 2D'
-    held = left_held_shape, middle_held_shape, right_held_shape
-    assert all(isinstance(s, Shape3D) for s in held), f'all held shapes must be 3D'
-    assert all(d2 in d3.terms for d2, d3 in zip(inner, held)), \
-        f'every held shape must contain respective inner shape at least once'
+    shades = left_shade, middle_shade, right_shade
+    assert all(isinstance(s, Shape2D) for s in shades), f'all shades must be 2D'
+    shapes_3d = left_3d_shape, middle_3d_shape, right_3d_shape
+    assert all(isinstance(s, Shape3D) for s in shapes_3d), f'all 3D shapes must be 3D'
+    assert all(d2 in d3.terms for d2, d3 in zip(shades, shapes_3d)), (
+        'every 3D shape must contain respective shade at least once, '
+        f'got {shapes_3d} and {shades}'
+    )
 
-    c1 = Counter(inner)
-    assert all(v == 1 for v in c1.values()), f'the number of all inner shapes must be 1, got {c1}'
-    c2 = Counter(chain.from_iterable(s.terms.elements() for s in held))
+    c1 = Counter(shades)
+    assert all(v == 1 for v in c1.values()), f'the number of all shades must be 1, got {c1}'
+    c2 = Counter(chain.from_iterable(s.terms.elements() for s in shapes_3d))
     assert all(v == 2 for v in c2.values()), \
         f'the number of all 2D terms of held 3D shapes must be 2, got {c2}'
 
     return StateOfAllStatues(
         left=StatueState(
             LEFT,
-            left_inner_shape,
-            shape_held=left_held_shape,
-            final_shape_held=key_set[left_inner_shape],
+            left_shade,
+            shape_held=left_3d_shape,
+            final_shape_held=key_set[left_shade],
             ),
         middle=StatueState(
             MIDDLE,
-            middle_inner_shape,
-            shape_held=middle_held_shape,
-            final_shape_held=key_set[middle_inner_shape],
+            middle_shade,
+            shape_held=middle_3d_shape,
+            final_shape_held=key_set[middle_shade],
             ),
         right=StatueState(
             RIGHT,
-            right_inner_shape,
-            shape_held=right_held_shape,
-            final_shape_held=key_set[right_inner_shape],
+            right_shade,
+            shape_held=right_3d_shape,
+            final_shape_held=key_set[right_shade],
             ),
         )
 
 
-__all__ = 'DissectMove', 'StateOfAllStatues', 'init_statues'
+__all__ = (
+    'SHAPE_TO_KNIGHT_POSITION',
+    'KNIGHTS_PER_SPAWN',
+    'DissectMove',
+    'StateOfAllStatues',
+    'init_statues',
+    )

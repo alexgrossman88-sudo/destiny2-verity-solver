@@ -1,12 +1,24 @@
 from collections import Counter
-from collections.abc import Iterable, Iterator, Set
+from collections.abc import Iterable, Iterator, MutableSet, Set
 from typing import Any, Self
 
 
-@Set.register
-class Multiset[T]:
+def discard_from_counter[T](counter: Counter[T], item: T, /) -> None:
     """
-    A special set which can hold the same object multiple times.
+    Removes the given element once from the given counter.
+    """
+    match counter[item]:
+        case 0: pass
+        case 1: dict.__delitem__(counter, item)
+        case count: counter[item] = count - 1
+
+
+# TODO use dict directly
+#  write convenience functions for addition, comparisons and operations.
+@Set.register
+class BaseMultiset[T]:
+    """
+    Base class for a multiset - a set which can hold the same object multiple times.
     """
     __slots__ = '_counter',
 
@@ -14,7 +26,7 @@ class Multiset[T]:
         """
         :param it: An iterable of elements to initialize this set.
         """
-        if isinstance(it, self.__class__):
+        if isinstance(it, BaseMultiset):
             self._counter = it._counter.copy()
         else:
             self._counter = Counter(it)
@@ -42,9 +54,6 @@ class Multiset[T]:
         """
         return self._counter.total()
 
-    def __hash__(self, /) -> int:
-        return hash(frozenset(self._counter))
-
     def __repr__(self, /) -> str:
         if self._counter:
             return f'{{{', '.join(repr(e) for e in self.elements())}}}'
@@ -70,21 +79,18 @@ class Multiset[T]:
 
     def discard_copy(self, item: T, /) -> Self:
         """
-        Copies this set and discards the given element from the copy.
+        Copies this set and removes the given element from the copy.
         Returns the copy.
         """
         new = self.copy()
-        match new._counter[item]:
-            case 0: pass
-            case 1: dict.__delitem__(new._counter, item)
-            case count: new._counter[item] = count - 1
-
+        discard_from_counter(new._counter, item)
         return new
 
     def remove_copy(self, item: T, /) -> Self:
         """
         Copies this set and removes the given element from the copy.
         Returns the copy.
+
         Raises :class:`KeyError` if the element is not present in this set.
         """
         if item in self:
@@ -114,7 +120,7 @@ class Multiset[T]:
         return True
 
     def __eq__(self, other: Any, /) -> bool:
-        if isinstance(other, self.__class__):
+        if isinstance(other, BaseMultiset):
             return self._counter == other._counter
 
         if isinstance(other, Set):
@@ -123,7 +129,7 @@ class Multiset[T]:
         return NotImplemented
 
     def __ne__(self, other: Any, /) -> bool:
-        if isinstance(other, self.__class__):
+        if isinstance(other, BaseMultiset):
             return self._counter != other._counter
 
         if isinstance(other, Set):
@@ -132,7 +138,7 @@ class Multiset[T]:
         return NotImplemented
 
     def __lt__(self, other: Set[T], /) -> bool:
-        if isinstance(other, self.__class__):
+        if isinstance(other, BaseMultiset):
             return self._counter < other._counter
 
         if isinstance(other, Set):
@@ -141,7 +147,7 @@ class Multiset[T]:
         return NotImplemented
 
     def __le__(self, other: Set[T], /) -> bool:
-        if isinstance(other, self.__class__):
+        if isinstance(other, BaseMultiset):
             return self._counter <= other._counter
 
         if isinstance(other, Set):
@@ -150,7 +156,7 @@ class Multiset[T]:
         return NotImplemented
 
     def __gt__(self, other: Set[T], /) -> bool:
-        if isinstance(other, self.__class__):
+        if isinstance(other, BaseMultiset):
             return self._counter > other._counter
 
         if isinstance(other, Set):
@@ -159,7 +165,7 @@ class Multiset[T]:
         return NotImplemented
 
     def __ge__(self, other: Set[T], /) -> bool:
-        if isinstance(other, self.__class__):
+        if isinstance(other, BaseMultiset):
             return self._counter >= other._counter
 
         if isinstance(other, Set):
@@ -168,7 +174,7 @@ class Multiset[T]:
         return NotImplemented
 
     def __add__(self, other: Set[T], /) -> Self:
-        if isinstance(other, self.__class__):
+        if isinstance(other, BaseMultiset):
             new = self.copy()
             new._counter += other._counter
             return new
@@ -183,7 +189,7 @@ class Multiset[T]:
     __radd__ = __add__
 
     def __sub__(self, other: Set[T], /) -> Self:
-        if isinstance(other, self.__class__):
+        if isinstance(other, BaseMultiset):
             new = self.copy()
             new._counter -= other._counter
             return new
@@ -192,17 +198,14 @@ class Multiset[T]:
             # From this multiset subtract other set, keeping only positive values
             new = self.copy()
             for e in other:
-                match new._counter[e]:
-                    case 0: pass
-                    case 1: dict.__delitem__(new._counter, e)
-                    case count: new._counter[e] = count - 1
+                discard_from_counter(new._counter, e)
 
             return new
 
         return NotImplemented
 
     def __rsub__(self, other: Set[T], /) -> Self:
-        if isinstance(other, self.__class__):
+        if isinstance(other, BaseMultiset):
             # From other multiset subtract this multiset.
             new = other.copy()
             new._counter -= self._counter
@@ -217,7 +220,7 @@ class Multiset[T]:
         return NotImplemented
 
     def __and__(self, other: Set[T], /) -> Self:
-        if isinstance(other, self.__class__):
+        if isinstance(other, BaseMultiset):
             new = self.copy()
             new._counter &= other._counter
             return new
@@ -233,7 +236,7 @@ class Multiset[T]:
     __rand__ = __and__
 
     def __or__(self, other: Set[T], /) -> Self:
-        if isinstance(other, self.__class__):
+        if isinstance(other, BaseMultiset):
             new = self.copy()
             new._counter |= other._counter
             return new
@@ -258,25 +261,23 @@ class Multiset[T]:
         # A symmetric difference is a difference between union and intersection.
         # Union - maximum number of counts from both multisets.
         # Intersection - minimum number of counts from both multisets.
-        if isinstance(other, self.__class__):
+        if isinstance(other, BaseMultiset):
             new = self.__class__()
-            counter = new._counter
+            new_counter = new._counter
             for e in self._counter.keys() | other._counter.keys():
-                counts = self._counter[e], other._counter[e]
-                count = max(counts) - min(counts)
+                count = abs(self._counter[e] - other._counter[e])
                 if count > 0:
-                    counter[e] = count
+                    new_counter[e] = count
 
             return new
 
         if isinstance(other, Set):
             new = self.__class__()
-            counter = new._counter
+            new_counter = new._counter
             for e in self._counter.keys() | other:
-                counts = self._counter[e], e in other
-                count = max(counts) - min(counts)
+                count = abs(self._counter[e] - (e in other))
                 if count > 0:
-                    counter[e] = count
+                    new_counter[e] = count
 
             return new
 
@@ -287,4 +288,152 @@ class Multiset[T]:
     # endregion
 
 
-__all__ = 'Multiset',
+class Multiset[T](BaseMultiset[T]):
+    """
+    An immutable multiset - a set which can hold the same object multiple times.
+    """
+    __slots__ = ()
+
+    def __hash__(self, /) -> int:
+        # Use only keys to evaluate the hash of this set.
+        # It is required because __eq__ method supports regular sets.
+        # A regular set equals a multiset
+        # if keys of multiset's counters are equal to the regular set.
+        # Thus, hash of the multiset must be equal to hash of the regular set too.
+        return hash(frozenset(self._counter))
+
+
+@MutableSet.register
+class MutableMultiset[T](BaseMultiset[T]):
+    """
+    A mutable multiset - a set which can hold the same object multiple times.
+    """
+    __slots__ = ()
+
+    def clear(self, /) -> None:
+        """
+        Clears this set.
+        """
+        self._counter.clear()
+
+    def add(self, item: T, /) -> None:
+        """
+        Adds the given element to this set.
+        """
+        self._counter[item] += 1
+
+    def discard(self, item: T, /) -> None:
+        """
+        Removes the given element from this set.
+        """
+        discard_from_counter(self._counter, item)
+
+    def remove(self, item: T, /) -> None:
+        """
+        Removes the given element from this set.
+
+        Raises :class:`KeyError` if the element is not present in this set.
+        """
+        if item in self:
+            self.discard(item)
+
+        raise KeyError(item)
+
+    def pop(self, /) -> T:
+        """
+        Removes and returns an arbitrary element from this set.
+
+        Raises :class:`KeyError` if this set is empty.
+        """
+        if self:
+            # Instead of using popitem on the counter which removes the last pair,
+            # get the last element and discard it.
+            last = next(reversed(self._counter))
+            self.discard(last)
+            return last
+
+        raise KeyError('pop from an empty set')
+
+    def __iadd__(self, other: Set[T], /) -> Self:
+        if isinstance(other, BaseMultiset):
+            self._counter += other._counter
+            return self
+
+        if isinstance(other, Set):
+            self._counter.update(other)
+            return self
+
+        return NotImplemented
+
+    def __isub__(self, other: Set[T], /) -> Self:
+        if isinstance(other, BaseMultiset):
+            self._counter -= other._counter
+            return self
+
+        if isinstance(other, Set):
+            # From this multiset subtract other set, keeping only positive values
+            for e in other:
+                discard_from_counter(self._counter, e)
+
+            return self
+
+    def __iand__(self, other: Set[T], /) -> Self:
+        if isinstance(other, BaseMultiset):
+            self._counter &= other._counter
+            return self
+
+        if isinstance(other, Set):
+            # Intersection between this multiset and other regular set, i.e.,
+            # keep elements from other that are present in this.
+            # All new counts must be 1.
+            self._counter = Counter(e for e in other if e in self._counter)
+            return self
+
+        return NotImplemented
+
+    def __ior__(self, other: Set[T], /) -> Self:
+        if isinstance(other, BaseMultiset):
+            self._counter |= other._counter
+            return self
+
+        if isinstance(other, Set):
+            # Union between this multiset and other regular set, i.e.,
+            # keep elements from this with the same count
+            # and add elements from other with count 1.
+            for e in other:
+                if e not in self._counter:
+                    self._counter[e] = 1
+
+            return self
+
+        return NotImplemented
+
+    def __ixor__(self, other: Set[T], /) -> Self:
+        # Regular set is a multiset with all counts being 1.
+        # A symmetric difference is a difference between union and intersection.
+        # Union - maximum number of counts from both multisets.
+        # Intersection - minimum number of counts from both multisets.
+        if isinstance(other, BaseMultiset):
+            new_counter = Counter()
+            for e in self._counter.keys() | other._counter.keys():
+                count = abs(self._counter[e] - other._counter[e])
+                if count > 0:
+                    new_counter[e] = count
+
+            self._counter = new_counter
+            return self
+
+        if isinstance(other, Set):
+            new_counter = Counter()
+            for e in self._counter.keys() | other:
+                count = abs(self._counter[e] - (e in other))
+                if count > 0:
+                    new_counter[e] = count
+
+            self._counter = new_counter
+            return self
+
+        return NotImplemented
+
+
+__all__ = 'BaseMultiset', 'Multiset', 'MutableMultiset'

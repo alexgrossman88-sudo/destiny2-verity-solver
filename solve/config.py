@@ -1,28 +1,12 @@
 import tomllib
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, NamedTuple
 
 from .combo import Combination, Node
 from .players import *
 from .shapes import *
-from .states import *
-
-number2shape = {
-    circle.code:   circle,
-    triangle.code: triangle,
-    square.code:   square,
-
-    20:            sphere,
-    23:            pyramid,
-    33:            pyramid,
-    24:            cube,
-    44:            cube,
-
-    30:            cone,
-    40:            cylinder,
-    34:            prism,
-    43:            prism,
-    }
+from .states.base import ALL_POSITIONS, LEFT, MIDDLE, PositionsType, RIGHT, is_position
 
 
 class KeySetName(Enum):
@@ -30,43 +14,89 @@ class KeySetName(Enum):
     DOUBLE = 'double'
 
 
+class SoloPlayer(NamedTuple):
+    player: Player
+    their_shape: Shape2D
+    other_shape: Shape2D
+
+
 @dataclass(frozen=True, kw_only=True, slots=True)
 class Config:
     key_set_name: KeySetName
-    inner_shapes: tuple[Shape2D, Shape2D, Shape2D]
-    held_shapes: tuple[Shape3D, Shape3D, Shape3D]
-    players: tuple[Player, Player, Player]
+    shades: tuple[Shape2D, Shape2D, Shape2D]
+    solo_players: tuple[SoloPlayer, SoloPlayer, SoloPlayer]
+    shapes_3d: tuple[Shape3D, Shape3D, Shape3D]
+    dissector: Player
+    helper1: Player
+    helper2: Player
     is_doing_triumph: bool
     last_position: PositionsType | None
 
-    def encounter_data(self, /) -> tuple[Combination, Combination, AliasMappingType]:
+    def encounter_data(self, /) -> tuple[Combination, Combination, AllPlayers]:
         """
-        Extracts room combination, statue combination and alias mapping from this config.
+        Extracts room combination, statue combination and all player aliases from this config.
         """
-        inner = self.inner_shapes
-        inner2person = {
+        shades = self.shades
+        shade2person = {
             i: p
-            for i in inner
-            for p in self.players
+            for i in shades
+            for p in self.solo_players
             if p.their_shape == i
             }
-        aliases = dict(zip(ALL_POSITIONS, (inner2person[i].alias for i in inner)))
-        other = tuple(inner2person[i].other_shape for i in inner)
+        position2player = dict(zip(ALL_POSITIONS, (shade2person[i].player for i in shades)))
+        other = tuple(shade2person[i].other_shape for i in shades)
 
         rooms = Combination(
-            left=Node.from_inner_and_other(inner[0], other[0]),
-            middle=Node.from_inner_and_other(inner[1], other[1]),
-            right=Node.from_inner_and_other(inner[2], other[2]),
+            left=Node(shade=shades[0], other=other[0]),
+            middle=Node(shade=shades[1], other=other[1]),
+            right=Node(shade=shades[2], other=other[2]),
             )
 
-        held = self.held_shapes
+        shapes_3d = self.shapes_3d
         statues = Combination(
-            left=Node.from_inner_and_other(inner[0], held[0] - inner[0]),
-            middle=Node.from_inner_and_other(inner[1], held[1] - inner[1]),
-            right=Node.from_inner_and_other(inner[2], held[2] - inner[2]),
+            left=Node(shade=shades[0], other=shapes_3d[0] - shades[0]),
+            middle=Node(shade=shades[1], other=shapes_3d[1] - shades[1]),
+            right=Node(shade=shades[2], other=shapes_3d[2] - shades[2]),
             )
 
-        return rooms, statues, aliases
+        all_players = AllPlayers(
+            **position2player,
+            dissector=self.dissector,
+            helper1=self.helper1,
+            helper2=self.helper2,
+            )
+        return rooms, statues, all_players
+
+
+_number_to_2d_shape = {
+    circle.code:   circle,
+    triangle.code: triangle,
+    square.code:   square,
+    }
+_number_to_3d_shape = {
+    20: sphere,
+    23: pyramid,
+    33: pyramid,
+    24: cube,
+    44: cube,
+
+    30: cone,
+    40: cylinder,
+    34: prism,
+    43: prism,
+    }
+
+_solo_player_fields = {'alias', 'their_shape', 'other_shape'}
+_main_room_fields = {'3d_shapes', 'dissector_alias', 'helper1_alias', 'helper2_alias'}
+
+
+def is_non_empty_string(s: Any, /) -> bool:
+    """
+    Returns ``True``, if the given value is a string
+    which is not empty or consists of only white spaces.
+    Returns ``False`` otherwise.
+    """
+    return s and isinstance(s, str) and not s.isspace()
 
 
 def read_config(filepath: str, /) -> Config:
@@ -91,36 +121,71 @@ def read_config(filepath: str, /) -> Config:
     assert last_position is None or is_position(last_position), \
         f'last_position must be \'\', {LEFT!r}, {MIDDLE!r} or {RIGHT!r}'
 
-    inner_shapes = data['inner_shapes']
-    assert isinstance(inner_shapes, list) and len(inner_shapes) == 3, \
-        f'inner_shapes must be a permutation of [0, 3, 4]'
+    shades = data.get('shades')
+    assert isinstance(shades, list) and set(shades) == _number_to_2d_shape.keys(), \
+        f'shades must be a permutation of [0, 3, 4]'
 
-    held_shapes = data['held_shapes']
-    assert isinstance(held_shapes, list) and len(held_shapes) == 3, \
-        f'held_shapes must be a list of three numbers representing 3D shapes'
+    shades_gen = (_number_to_2d_shape[i] for i in shades)
+    shades_final = next(shades_gen), next(shades_gen), next(shades_gen)
 
-    inner: list[Shape2D] = [number2shape[i] for i in inner_shapes]
-    held: list[Shape3D] = [number2shape[i] for i in held_shapes]
-
-    player1_kw = data['player1']
-    player2_kw = data['player2']
-    player3_kw = data['player3']
     players = []
-    for i, p in enumerate((player1_kw, player2_kw, player3_kw), 1):
-        cond = isinstance(p, dict) and p.keys() == Player.__annotations__.keys()
-        assert cond, (
-            f'player{i} must be a mapping '
-            f'and have values for fields {', '.join(Player.__annotations__)}'
-        )
-        p['their_shape'] = number2shape[p['their_shape']]
-        p['other_shape'] = number2shape[p['other_shape']]
-        players.append(Player(**p))
+    for i, p in enumerate(map(data.get, ('player1', 'player2', 'player3')), 1):
+        assert isinstance(p, dict) and p.keys() == _solo_player_fields, \
+            f'player{i} must be a mapping ' \
+            f'and have values for fields {', '.join(_solo_player_fields)}'
+
+        alias = p['alias']
+        assert is_non_empty_string(alias), f'alias of player{i} must be a non-empty string'
+
+        their_shape = p['their_shape']
+        other_shape = p['other_shape']
+        assert their_shape in _number_to_2d_shape and other_shape in _number_to_2d_shape, \
+            f'their_shape and other_shape of player{i} must be 0, 3 or 4'
+
+        players.append(
+            SoloPlayer(
+                player=Player(alias.strip()),
+                their_shape=_number_to_2d_shape[their_shape],
+                other_shape=_number_to_2d_shape[other_shape],
+                )
+            )
+
+    main_room = data.get('main_room')
+    assert isinstance(main_room, dict) and main_room.keys() == _main_room_fields, \
+        f'main_room must be a mapping and have values for fields {', '.join(_main_room_fields)}'
+
+    shapes_3d = main_room['3d_shapes']
+    assert (
+            isinstance(shapes_3d, list)
+            and len(shapes_3d) == 3
+            and set(shapes_3d) <= _number_to_3d_shape.keys()
+    ), f'3d_shapes must be a list of three numbers representing 3D shapes'
+
+    shapes_3d_gen = (_number_to_3d_shape[i] for i in shapes_3d)
+    shapes_3d_final = next(shapes_3d_gen), next(shapes_3d_gen), next(shapes_3d_gen)
+
+    dissector = main_room['dissector_alias']
+    helper1 = main_room['helper1_alias']
+    helper2 = main_room['helper2_alias']
+    assert (
+            is_non_empty_string(dissector)
+            and is_non_empty_string(helper1)
+            and is_non_empty_string(helper2)
+    ), f'aliases of players in the main room must be non-empty strings'
+
+    assert all(d2 in d3.terms for d2, d3 in zip(shades_final, shapes_3d_final)), (
+        'every 3D shape must contain respective shade at least once, '
+        f'got {shapes_3d_final} and {shades_final}'
+    )
 
     return Config(
         key_set_name=KeySetName(key_set_name),
-        inner_shapes=(inner[0], inner[1], inner[2]),
-        held_shapes=(held[0], held[1], held[2]),
-        players=(players[0], players[1], players[2]),
+        shades=shades_final,
+        solo_players=(players[0], players[1], players[2]),
+        shapes_3d=shapes_3d_final,
+        dissector=Player(dissector.strip()),
+        helper1=Player(helper1.strip()),
+        helper2=Player(helper2.strip()),
         is_doing_triumph=is_doing_triumph,
         last_position=last_position,
         )

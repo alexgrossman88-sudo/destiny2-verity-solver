@@ -6,7 +6,7 @@ import solve
 from .combo import get_best_double_key
 from .config import KeySetName, read_config
 from .key_sets import *
-from .printer import *
+from .move_analyzer import *
 
 
 class EncounterParts(StrEnum):
@@ -41,7 +41,7 @@ def main(
     rooms, statues, aliases = config.encounter_data()
     match config.key_set_name:
         case KeySetName.MIXED:
-            key_set = KSMixed
+            key_set = KS_MIXED
         case KeySetName.DOUBLE:
             key_set = get_best_double_key(
                 rooms=rooms if do_rooms else None,
@@ -50,18 +50,44 @@ def main(
         case unknown:
             assert_never(unknown)
 
+    print('--- FINAL SHAPES FROM LEFT TO RIGHT ---')
+    print(*map(key_set.__getitem__, config.shades))
+
+    print_step = input if interactive else print
+
     if do_rooms:
+        print('\n--- STEPS FOR SOLO ROOMS ---')
         room_state = rooms.to_room_state(key_set)
-        rooms_solved = room_state.solve(with_triumph, last_position)
-        print_pass_moves(rooms_solved, aliases, interactive)
-        last_position = rooms_solved.last_position
+        rooms_solutions = room_state.solve(with_triumph, last_position)
+        rooms_best, rooms_steps = best_solution(rooms_solutions, aliases, describe_pass_moves)
+        for step in rooms_steps:
+            print_step(step.render())
+
+        last_position = rooms_best.last_position
+        print(
+            '--- SOLO ROOMS ARE DONE ---\n'
+            'All players in solo rooms must collect two shapes and wait'
+            )
 
     if do_dissect:
-        if do_rooms: print('\n')
-
+        print('\n--- STEPS FOR DISSECTION ---')
         statue_state = statues.to_statue_state(key_set)
-        statues_solved = statue_state.solve(with_triumph, last_position)
-        print_dissect_moves(statues_solved, interactive)
+        statues_solutions = statue_state.solve(with_triumph, last_position)
+        statues_best, statues_steps = best_solution(
+            statues_solutions,
+            aliases,
+            describe_dissect_moves,
+            )
+        for step in statues_steps:
+            print_step(step.render())
+
+        last_position = statues_best.last_position
+        print(
+            '--- DISSECTION IS DONE ---\n'
+            'All players in solo rooms must leave them'
+            )
+
+    print(f'\n--- LAST POSITION ---\n{last_position}')
 
 
 def define_parser() -> ArgumentParser:

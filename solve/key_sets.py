@@ -4,20 +4,20 @@ from .shapes import *
 
 type KeySetType = Mapping[Shape2D, Shape3D]
 
-KSMixed: KeySetType = {
+KS_MIXED: KeySetType = {
     circle:   prism,
     triangle: cylinder,
     square:   cone,
     }
-KSDouble1: KeySetType = {
+KS_DOUBLE_1: KeySetType = {
     circle:   cube,
     triangle: sphere,
     square:   pyramid,
     }
-KSDouble2: KeySetType = {
+KS_DOUBLE_2: KeySetType = {
     circle:   pyramid,
     triangle: cube,
     square:   sphere,
     }
 
-__all__ = 'KeySetType', 'KSMixed', 'KSDouble1', 'KSDouble2'
+__all__ = 'KeySetType', 'KS_MIXED', 'KS_DOUBLE_1', 'KS_DOUBLE_2'

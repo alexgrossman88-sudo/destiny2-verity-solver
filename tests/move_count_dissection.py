@@ -1,3 +1,5 @@
+from solve.combo import code_to_best_ks
+
 number_of_moves_mixed = {
     '0[00]-3[33]-4[44]': 6,
     '0[00]-3[34]-4[43]': 4,
@@ -37,7 +39,7 @@ number_of_moves_mixed = {
     '4[44]-3[33]-0[00]': 6,
     }
 """
-Combination code to the number of moves required to solve statues using ``KSMixed``.
+Combination code to the number of moves required to solve statues using ``KS_MIXED``.
 """
 
 number_of_moves_double1 = {
@@ -79,7 +81,7 @@ number_of_moves_double1 = {
     '4[44]-3[33]-0[00]': 8,
     }
 """
-Combination code to the number of moves required to solve statues using ``KSDouble1``.
+Combination code to the number of moves required to solve statues using ``KS_DOUBLE_1``.
 """
 
 number_of_moves_double2 = {
@@ -121,5 +123,31 @@ number_of_moves_double2 = {
     '4[44]-3[33]-0[00]': 8,
     }
 """
-Combination code to the number of moves required to solve statues using ``KSDouble2``.
+Combination code to the number of moves required to solve statues using ``KS_DOUBLE_2``.
 """
+
+number_of_steps_mixed = {
+    code: moves_count + moves_count // 3
+    for code, moves_count in number_of_moves_mixed.items()
+    }
+"""
+Combination code to the number of steps required to solve statues using ``KS_MIXED``.
+"""
+
+number_of_steps_double1 = {
+    code: moves_count + moves_count // 3 + (moves_count == 6 and code not in code_to_best_ks)
+    for code, moves_count in number_of_moves_double1.items()
+    }
+"""
+Combination code to the number of steps required to solve statues using ``KS_DOUBLE_1``.
+"""
+
+number_of_steps_double2 = {
+    code: moves_count + moves_count // 3 + (moves_count == 6 and code not in code_to_best_ks)
+    for code, moves_count in number_of_moves_double2.items()
+    }
+"""
+Combination code to the number of steps required to solve statues using ``KS_DOUBLE_2``.
+"""
+
+del code_to_best_ks

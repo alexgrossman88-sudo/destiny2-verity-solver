@@ -1,11 +1,11 @@
 from collections import Counter
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 from itertools import permutations
 from typing import Self
 
 from .base import *
-from ..key_sets import KSMixed, KeySetType
+from ..key_sets import KS_MIXED, KeySetType
 from ..multiset import Multiset
 from ..shapes import Shape2D, Shape3D
 
@@ -32,14 +32,14 @@ class RoomState(State):
         # To remove a shadow X, the room must receive shape X.
         # For example, circle room must receive triangle and square to remove both shadows.
         if shapes_to_receive is None:
-            # This rooms must receive KSMixed[own_shape].terms in any case.
+            # This rooms must receive KS_MIXED[own_shape].terms in any case.
             # In addition, this room must receive any other shape from final_dropping_shapes
             # unless it is already present in dropping_shapes.
             # Take union (not sum!) between
             # "must receive in any case" and "must receive to be done".
             # Unions of multisets takes the highest count of elements instead of summing count,
             # ex. {triangle, circle} | {triangle, triangle} = {triangle, circle, triangle}.
-            shapes_to_receive = KSMixed[own_shape].terms \
+            shapes_to_receive = KS_MIXED[own_shape].terms \
                                 | (final_dropping_shapes - dropping_shapes)
 
         super().__init__(
@@ -91,12 +91,32 @@ class RoomState(State):
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class PassMove:
-    departure: PositionsType
     shape: Shape2D
-    destination: PositionsType
-    # States AFTER move is done
+    """
+    Shape passed from the departure room to the destination room.
+    """
     departure_state: RoomState
+    """
+    State of the departure room after this move is done.
+    """
     destination_state: RoomState
+    """
+    State of the destination room after this move is done.
+    """
+
+    @property
+    def departure(self, /) -> PositionsType:
+        """
+        Position of the departure room.
+        """
+        return self.departure_state.position
+
+    @property
+    def destination(self, /) -> PositionsType:
+        """
+        Position of the destination room.
+        """
+        return self.destination_state.position
 
 
 class StateOfAllRooms(StateWithAllPositions[RoomState, PassMove]):
@@ -118,12 +138,13 @@ class StateOfAllRooms(StateWithAllPositions[RoomState, PassMove]):
             if s1.is_done or s2.is_done: continue
 
             for shape in s1.shapes_available:
-                if s2.is_shape_required(shape):
+                # Use the possibility to pass the shape to s2
+                # only if s2 has at most 2 shapes available.
+                # This avoids any room to have 4 shapes or more available simultaneously.
+                if s2.is_shape_required(shape) and s2.shapes_available.total <= 2:
                     new_s1, new_s2 = s1.pass_shape(shape, s2)
                     move = PassMove(
-                        departure=s1.position,
                         shape=shape,
-                        destination=s2.position,
                         departure_state=new_s1,
                         destination_state=new_s2,
                         )
@@ -136,17 +157,18 @@ class StateOfAllRooms(StateWithAllPositions[RoomState, PassMove]):
                     yield StateOfAllRooms(**kwargs)
 
     # Required for correct type hinting in stupid PyCharm...
-    def solve(self, /, is_doing_triumph: bool, last_position_touched: str | None) -> Self: ...
+    def solve(self, /, is_doing_triumph: bool, last_position_touched: str | None) -> Sequence[Self]:
+        ...
     del solve
 
 
 def init_rooms(
         *,
-        left_inner_shape: Shape2D,
+        left_shade: Shape2D,
         left_other_shape: Shape2D,
-        middle_inner_shape: Shape2D,
+        middle_shade: Shape2D,
         middle_other_shape: Shape2D,
-        right_inner_shape: Shape2D,
+        right_shade: Shape2D,
         right_other_shape: Shape2D,
         key_set: KeySetType,
         ) -> StateOfAllRooms:
@@ -154,11 +176,11 @@ def init_rooms(
     A convenience function to specify the initial state of all solo rooms.
     """
     shapes = (
-        left_inner_shape,
+        left_shade,
         left_other_shape,
-        middle_inner_shape,
+        middle_shade,
         middle_other_shape,
-        right_inner_shape,
+        right_shade,
         right_other_shape,
         )
     assert all(isinstance(f, Shape2D) for f in shapes), f'all shapes must be 2D shapes'
@@ -169,21 +191,21 @@ def init_rooms(
     return StateOfAllRooms(
         left=RoomState(
             LEFT,
-            left_inner_shape,
-            dropping_shapes=Multiset((left_inner_shape, left_other_shape)),
-            final_dropping_shapes=key_set[left_inner_shape].terms,
+            left_shade,
+            dropping_shapes=Multiset((left_shade, left_other_shape)),
+            final_dropping_shapes=key_set[left_shade].terms,
             ),
         middle=RoomState(
             MIDDLE,
-            middle_inner_shape,
-            dropping_shapes=Multiset((middle_inner_shape, middle_other_shape)),
-            final_dropping_shapes=key_set[middle_inner_shape].terms,
+            middle_shade,
+            dropping_shapes=Multiset((middle_shade, middle_other_shape)),
+            final_dropping_shapes=key_set[middle_shade].terms,
             ),
         right=RoomState(
             RIGHT,
-            right_inner_shape,
-            dropping_shapes=Multiset((right_inner_shape, right_other_shape)),
-            final_dropping_shapes=key_set[right_inner_shape].terms,
+            right_shade,
+            dropping_shapes=Multiset((right_shade, right_other_shape)),
+            final_dropping_shapes=key_set[right_shade].terms,
             ),
         )
 

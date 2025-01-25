@@ -1,17 +1,47 @@
-from collections.abc import Mapping
 from dataclasses import dataclass
 
-from .shapes import Shape2D
-from .states import PositionsType
+from .states.base import PositionsType
 
-type AliasMappingType = Mapping[PositionsType, str]
+
+@dataclass(slots=True)
+class Player:
+    """
+    An object which holds player's alias.
+
+    Keep mutable to allow updates to the alias.
+    This is useful for dynamically changing player's alais
+    in cases when someone dies after all steps are created.
+    """
+    alias: str
+
+    def __format__(self, format_spec: str, /) -> str:
+        return format(self.alias, format_spec)
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
-class Player:
-    alias: str
-    their_shape: Shape2D
-    other_shape: Shape2D
+class AllPlayers:
+    """
+    All players.
+
+    Immutable, so references to player objects are locked.
+    For example,
+    whenever a step references the player in the left room,
+    that step will continue to reference the player in the left room
+    even if original player died and was replaced.
+    """
+    left: Player
+    middle: Player
+    right: Player
+
+    dissector: Player
+    helper1: Player
+    helper2: Player
+
+    def solo_player(self, room_position: PositionsType, /) -> Player:
+        """
+        Get the solo player inside the given room.
+        """
+        return getattr(self, room_position)
 
 
-__all__ = 'Player', 'AliasMappingType'
+__all__ = 'Player', 'AllPlayers'
